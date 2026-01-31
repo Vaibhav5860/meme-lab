@@ -123,3 +123,68 @@ window.MemeJokesApi = {
     getJoke,
     revealPunchline
 };
+
+// Engaging features: Add joke rating and share
+function rateJoke(rating) {
+    const lastJoke = jokeApiHistory[jokeApiHistory.length - 1];
+    if (lastJoke) {
+        lastJoke.rating = rating;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = rating === 'like' ? '😂 Glad you liked it!' : '😐 Maybe next time!';
+        document.getElementById('toast-container').appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+}
+
+function shareJoke() {
+    const lastJoke = jokeApiHistory[jokeApiHistory.length - 1];
+    if (!lastJoke) return;
+    let text = '';
+    if (lastJoke.data.type === 'twopart') {
+        text = `${lastJoke.data.setup}\n${lastJoke.data.delivery}`;
+    } else {
+        text = lastJoke.data.joke;
+    }
+    if (navigator.share) {
+        navigator.share({ text }).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(text);
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = 'Joke copied to clipboard!';
+        document.getElementById('toast-container').appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+}
+
+// Patch modal to add rating and share buttons
+const oldOpenJokesApi = window.MemeJokesApi.openJokes;
+window.MemeJokesApi.openJokes = function() {
+    oldOpenJokesApi();
+    setTimeout(() => {
+        const actions = document.querySelector('.joke-actions');
+        if (actions && !document.getElementById('joke-rate-like')) {
+            const likeBtn = document.createElement('button');
+            likeBtn.className = 'btn btn-success';
+            likeBtn.id = 'joke-rate-like';
+            likeBtn.innerHTML = '<i class="fas fa-thumbs-up"></i> Like';
+            likeBtn.onclick = () => rateJoke('like');
+            actions.appendChild(likeBtn);
+
+            const dislikeBtn = document.createElement('button');
+            dislikeBtn.className = 'btn btn-danger';
+            dislikeBtn.id = 'joke-rate-dislike';
+            dislikeBtn.innerHTML = '<i class="fas fa-thumbs-down"></i> Dislike';
+            dislikeBtn.onclick = () => rateJoke('dislike');
+            actions.appendChild(dislikeBtn);
+
+            const shareBtn = document.createElement('button');
+            shareBtn.className = 'btn btn-secondary';
+            shareBtn.id = 'joke-share';
+            shareBtn.innerHTML = '<i class="fas fa-share"></i> Share';
+            shareBtn.onclick = shareJoke;
+            actions.appendChild(shareBtn);
+        }
+    }, 100);
+};

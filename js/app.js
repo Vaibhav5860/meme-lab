@@ -82,6 +82,12 @@ window.downloadCreatedMeme = () => window.MemeCreator.downloadCreatedMeme();
 window.playQuiz = () => window.MemeQuiz.playQuiz();
 window.closeQuiz = () => window.MemeQuiz.closeQuiz();
 
+window.playJokes = () => window.MemeJokes.openJokes();
+window.closeJokes = () => window.MemeJokes.closeJokes();
+
+window.playJokesApi = () => window.MemeJokesApi.openJokes();
+window.closeJokesApi = () => window.MemeJokesApi.closeJokes();
+
 window.toggleMobileMenu = (section) => window.MemeMobile.toggleMobileMenu(section);
 
 // Initialize when DOM is ready

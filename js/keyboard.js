@@ -1,6 +1,6 @@
 /**
  * Keyboard Shortcuts Module
- * Handles all keyboard interactions
+ * Handles keyboard shortcuts for main functions
  */
 
 /**
@@ -9,11 +9,7 @@
 const shortcuts = {
     ' ': { action: 'newMeme', description: 'Get new meme' },
     'f': { action: 'favorite', description: 'Toggle favorite' },
-    'd': { action: 'download', description: 'Download meme' },
-    's': { action: 'slideshow', description: 'Start slideshow' },
-    'Escape': { action: 'closeModals', description: 'Close modals' },
-    'ArrowLeft': { action: 'slideshowPrev', description: 'Previous slide' },
-    'ArrowRight': { action: 'slideshowNext', description: 'Next slide' }
+    'ctrl+s': { action: 'download', description: 'Download meme' }
 };
 
 /**
@@ -35,6 +31,13 @@ function handleKeyDown(event) {
     
     const key = event.key.toLowerCase();
     
+    // Handle Ctrl+S for download
+    if (event.ctrlKey && key === 's') {
+        event.preventDefault();
+        window.MemeMeme.downloadMeme();
+        return;
+    }
+    
     switch (key) {
         case ' ':
             event.preventDefault();
@@ -44,55 +47,7 @@ function handleKeyDown(event) {
         case 'f':
             window.MemeFavorites.toggleFavorite();
             break;
-            
-        case 'd':
-            window.MemeMeme.downloadMeme();
-            break;
-            
-        case 's':
-            window.MemeSlideshow.startSlideshow();
-            break;
-            
-        case 'escape':
-            closeAllModals();
-            break;
-            
-        case 'arrowleft':
-            if (isSlideshowOpen()) {
-                window.MemeSlideshow.slideshowPrev();
-            }
-            break;
-            
-        case 'arrowright':
-            if (isSlideshowOpen()) {
-                window.MemeSlideshow.slideshowNext();
-            }
-            break;
-            
-        case 'q':
-            window.MemeQuiz.playQuiz();
-            break;
-            
-        case 'c':
-            window.MemeCreator.openCreator();
-            break;
-            
-        case 't':
-            window.MemeSettings.toggleTheme();
-            break;
-            
-        case 'm':
-            window.MemeSettings.toggleSound();
-            break;
     }
-}
-
-/**
- * Check if slideshow modal is open
- * @returns {boolean} Whether slideshow is open
- */
-function isSlideshowOpen() {
-    return document.getElementById('slideshow-modal').classList.contains('active');
 }
 
 /**

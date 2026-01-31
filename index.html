@@ -208,7 +208,7 @@
             </div>
 
             <p class="shortcuts-hint">
-                <kbd>Space</kbd> New Meme &nbsp; <kbd>F</kbd> Favorite &nbsp; <kbd>D</kbd> Download &nbsp; <kbd>S</kbd> Slideshow
+                <kbd>Space</kbd> New Meme &nbsp; <kbd>F</kbd> Favorite &nbsp; <kbd>Ctrl+S</kbd> Download
             </p>
         </main>
 
@@ -235,7 +235,10 @@
             </div>
 
             <div class="card">
-                <h3 class="card-title"><i class="fas fa-lightbulb"></i> Did You Know?</h3>
+                <h3 class="card-title">
+                    <i class="fas fa-lightbulb"></i> Did You Know?
+                    <i class="fas fa-sync-alt" onclick="window.MemeSettings.showRandomFact()" style="cursor: pointer; font-size: 0.9rem; margin-left: auto; opacity: 0.7; transition: all 0.3s ease;" onmouseover="this.style.opacity='1'; this.style.transform='rotate(180deg)'" onmouseout="this.style.opacity='0.7'; this.style.transform='rotate(0)'"></i>
+                </h3>
                 <p id="fun-fact" style="font-size: 0.9rem; color: var(--text-muted);">
                     The word "meme" was coined by Richard Dawkins in his 1976 book "The Selfish Gene"!
                 </p>

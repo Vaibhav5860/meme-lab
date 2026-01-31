@@ -269,8 +269,8 @@
 
     <!-- Slideshow Modal -->
     <div class="modal" id="slideshow-modal">
-        <span class="modal-close" onclick="stopSlideshow()">&times;</span>
         <div class="slideshow-container">
+            <span class="modal-close" onclick="stopSlideshow()">&times;</span>
             <img id="slideshow-image" src="" alt="Slideshow">
             <div class="slideshow-progress" id="slideshow-progress"></div>
         </div>
@@ -289,8 +289,8 @@
 
     <!-- Quiz Modal -->
     <div class="modal" id="quiz-modal">
-        <span class="modal-close" onclick="closeQuiz()">&times;</span>
         <div class="quiz-content">
+            <span class="modal-close" onclick="closeQuiz()">&times;</span>
             <h2 style="margin-bottom: 1rem;"><i class="fas fa-question-circle"></i> Meme Quiz</h2>
             <p class="quiz-question" id="quiz-question">What's the name of this famous meme?</p>
             <div class="quiz-options" id="quiz-options"></div>
@@ -300,8 +300,8 @@
 
     <!-- Meme Creator Modal -->
     <div class="modal" id="creator-modal">
-        <span class="modal-close" onclick="closeCreator()">&times;</span>
         <div class="creator-content">
+            <span class="modal-close" onclick="closeCreator()">&times;</span>
             <h2 style="margin-bottom: 1rem; text-align: center;"><i class="fas fa-paint-brush"></i> Create Your Meme</h2>
             <div class="creator-preview" id="creator-preview">
                 <img id="creator-image" src="https://i.imgflip.com/30b1gx.jpg" alt="Meme Template">
@@ -311,11 +311,14 @@
             <div class="creator-inputs">
                 <input type="text" id="top-text-input" placeholder="Top Text" oninput="updateCreatorText()">
                 <input type="text" id="bottom-text-input" placeholder="Bottom Text" oninput="updateCreatorText()">
-                <div style="display: flex; gap: 1rem;">
-                    <button class="btn btn-secondary" style="flex: 1;" onclick="randomTemplate()">
-                        <i class="fas fa-random"></i> Random Template
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" onclick="randomTemplate()">
+                        <i class="fas fa-random"></i> Random
                     </button>
-                    <button class="btn" style="flex: 1;" onclick="downloadCreatedMeme()">
+                    <button class="btn btn-secondary" style="flex: 1; min-width: 120px;" onclick="uploadCustomImage()">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                    <button class="btn" style="flex: 1; min-width: 120px;" onclick="downloadCreatedMeme()">
                         <i class="fas fa-download"></i> Download
                     </button>
                 </div>

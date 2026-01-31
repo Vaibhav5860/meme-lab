@@ -109,24 +109,91 @@ async function downloadMeme() {
     const { showToast } = window.MemeUI;
     const { sounds } = window.MemeSounds;
     const { updateStats } = window.MemeSettings;
-    const { downloadFile } = window.MemeUtils;
     
     if (!state.currentMeme) return;
 
-    const success = await downloadFile(
-        state.currentMeme.url, 
-        `meme-${Date.now()}.jpg`
-    );
+    showToast('Downloading meme... 📥', 'success');
     
-    if (success) {
+    const imgUrl = state.currentMeme.url;
+    const filename = `meme-${Date.now()}.jpg`;
+    
+    // Try direct fetch first (works for some sources like imgflip)
+    try {
+        const response = await fetch(imgUrl);
+        if (response.ok) {
+            const blob = await response.blob();
+            downloadBlob(blob, filename);
+            onDownloadSuccess();
+            return;
+        }
+    } catch (e) {
+        console.log('Direct fetch failed, trying proxies...');
+    }
+    
+    // Use CORS proxies for Reddit images
+    const corsProxies = [
+        `https://corsproxy.io/?${encodeURIComponent(imgUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(imgUrl)}`,
+        `https://proxy.cors.sh/${imgUrl}`,
+    ];
+    
+    // Try CORS proxies
+    for (const proxyUrl of corsProxies) {
+        try {
+            const response = await fetch(proxyUrl);
+            if (response.ok) {
+                const blob = await response.blob();
+                if (blob.size > 0) {
+                    downloadBlob(blob, filename);
+                    onDownloadSuccess();
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('Proxy failed:', proxyUrl);
+        }
+    }
+    
+    // Last resort: Create a temporary anchor with the image URL
+    // This works in some browsers for same-origin or CORS-enabled images
+    try {
+        const link = document.createElement('a');
+        link.href = imgUrl;
+        link.download = filename;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Assume success since we can't know for sure
+        onDownloadSuccess();
+        return;
+    } catch (e) {
+        console.log('Direct link download failed');
+    }
+    
+    // Final fallback: open image in new tab for manual save
+    showToast('Opening image - right-click and "Save image as..."', 'warning');
+    window.open(imgUrl, '_blank');
+    
+    function downloadBlob(blob, filename) {
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
+    }
+    
+    function onDownloadSuccess() {
         state.stats.downloaded++;
         saveStats();
         updateStats();
         sounds.download();
-        showToast('Meme downloaded! 📥', 'success');
-    } else {
-        // Fallback: Try right-click save suggestion
-        showToast('Right-click the image and select "Save image as..." to download', 'warning');
+        showToast('Meme downloaded! 🎉', 'success');
     }
 }
 

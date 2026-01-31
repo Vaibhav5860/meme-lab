@@ -163,8 +163,8 @@ function showDataManagement() {
     modal.id = 'data-modal';
     modal.style.cssText = 'overflow-y: auto; padding: 2rem 1rem;';
     modal.innerHTML = `
-        <span class="modal-close" onclick="this.parentElement.remove()">&times;</span>
         <div class="quiz-content" style="max-width: 450px; max-height: 85vh; overflow-y: auto; margin: auto;">
+            <span class="modal-close" onclick="this.closest('.modal').remove()">&times;</span>
             <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-database"></i> Your Data</h2>
             
             <div style="text-align: left; margin-bottom: 1.5rem;">

@@ -61,24 +61,120 @@ function updateCreatorText() {
 
 /**
  * Download created meme
- * Note: For a full implementation, you would use html2canvas or similar
+ * Uses canvas to render image with text overlay
  */
 async function downloadCreatedMeme() {
     const { showToast } = window.MemeUI;
     
     showToast('Creating your meme... 🎨', 'success');
     
+    const imgElement = document.getElementById('creator-image');
+    const topText = document.getElementById('top-text-input').value || 'TOP TEXT';
+    const bottomText = document.getElementById('bottom-text-input').value || 'BOTTOM TEXT';
+    const imgSrc = imgElement.src;
+    
+    // Check if it's a data URL (uploaded image) - can use directly
+    if (imgSrc.startsWith('data:')) {
+        renderAndDownload(imgElement, topText, bottomText);
+        return;
+    }
+    
+    // For external URLs, fetch and convert to blob first to avoid CORS
     try {
-        // Simple approach: download the template
-        // For full text overlay, you would need html2canvas
-        const link = document.createElement('a');
-        link.download = 'my-meme.jpg';
-        link.href = document.getElementById('creator-image').src;
-        link.click();
+        const response = await fetch(imgSrc);
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
         
-        showToast('Template downloaded! Add text using an image editor.', 'success');
+        const img = new Image();
+        img.onload = () => {
+            renderAndDownload(img, topText, bottomText);
+            URL.revokeObjectURL(objectUrl);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            // Fallback: try with crossOrigin
+            tryWithCrossOrigin(imgSrc, topText, bottomText);
+        };
+        img.src = objectUrl;
+        
     } catch (error) {
-        showToast('Download the template and add text manually!', 'warning');
+        console.warn('Fetch failed, trying crossOrigin approach:', error);
+        tryWithCrossOrigin(imgSrc, topText, bottomText);
+    }
+}
+
+/**
+ * Try loading image with crossOrigin attribute
+ */
+function tryWithCrossOrigin(imgSrc, topText, bottomText) {
+    const { showToast } = window.MemeUI;
+    
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        renderAndDownload(img, topText, bottomText);
+    };
+    img.onerror = () => {
+        showToast('Cannot download this template. Try uploading your own image!', 'warning');
+    };
+    img.src = imgSrc;
+}
+
+/**
+ * Render image with text and download
+ */
+function renderAndDownload(img, topText, bottomText) {
+    const { showToast } = window.MemeUI;
+    
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to image size
+        canvas.width = img.naturalWidth || img.width || 500;
+        canvas.height = img.naturalHeight || img.height || 500;
+        
+        // Draw image
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Configure text style
+        const fontSize = Math.floor(canvas.width / 12);
+        ctx.font = `bold ${fontSize}px Impact, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = fontSize / 15;
+        
+        // Draw top text
+        const topY = fontSize + 10;
+        ctx.strokeText(topText.toUpperCase(), canvas.width / 2, topY);
+        ctx.fillText(topText.toUpperCase(), canvas.width / 2, topY);
+        
+        // Draw bottom text
+        const bottomY = canvas.height - 15;
+        ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, bottomY);
+        ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, bottomY);
+        
+        // Convert to blob and download
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `meme-${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast('Meme downloaded! 🎉', 'success');
+            } else {
+                showToast('Failed to create image. Try uploading your own!', 'warning');
+            }
+        }, 'image/png');
+        
+    } catch (error) {
+        console.error('Render failed:', error);
+        showToast('Failed to create meme. Try uploading your own image!', 'warning');
     }
 }
 

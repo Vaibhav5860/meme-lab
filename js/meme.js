@@ -15,9 +15,9 @@ async function getMeme(category = null) {
     const { sounds } = window.MemeSounds;
     const { addToHistory } = window.MemeHistory;
     const { checkAchievements, updateStats } = window.MemeSettings;
-    
+
     const currentCategory = category || state.currentCategory;
-    
+
     try {
         setLoadingState(true);
 
@@ -26,10 +26,10 @@ async function getMeme(category = null) {
         if (!response.ok) throw new Error('Network error');
 
         const data = await response.json();
-        
+
         // Find a meme we haven't seen
         let meme = data.memes.find(m => !state.seenMemes.has(m.url));
-        
+
         // If all seen, clear some history and pick random
         if (!meme) {
             state.seenMemes.clear();
@@ -38,7 +38,7 @@ async function getMeme(category = null) {
 
         // Mark as seen
         state.seenMemes.add(meme.url);
-        
+
         // Limit seen memes cache size
         if (state.seenMemes.size > 500) {
             const arr = Array.from(state.seenMemes);
@@ -54,10 +54,10 @@ async function getMeme(category = null) {
         elements.memeImage.onload = () => {
             setLoadingState(false);
             sounds.pop();
-            
+
             // Add to history
             addToHistory(meme);
-            
+
             // Update stats
             state.stats.viewed++;
             saveStats();
@@ -76,7 +76,7 @@ async function getMeme(category = null) {
         console.error('Error:', error);
         showToast('Failed to load meme. Trying again...', 'error');
         setLoadingState(false);
-        
+
         // Retry with default category
         setTimeout(() => getMeme('memes'), 1000);
     }
@@ -91,7 +91,7 @@ function loadMeme(index, source) {
     const { state } = window.MemeState;
     const { updateMemeDisplay, updateFavoriteButton } = window.MemeUI;
     const { sounds } = window.MemeSounds;
-    
+
     const meme = source === 'favorites' ? state.favorites[index] : state.history[index];
     if (!meme) return;
 
@@ -109,14 +109,14 @@ async function downloadMeme() {
     const { showToast } = window.MemeUI;
     const { sounds } = window.MemeSounds;
     const { updateStats } = window.MemeSettings;
-    
+
     if (!state.currentMeme) return;
 
     showToast('Downloading meme... 📥', 'success');
-    
+
     const imgUrl = state.currentMeme.url;
     const filename = `meme-${Date.now()}.jpg`;
-    
+
     // Try direct fetch first (works for some sources like imgflip)
     try {
         const response = await fetch(imgUrl);
@@ -129,14 +129,14 @@ async function downloadMeme() {
     } catch (e) {
         console.log('Direct fetch failed, trying proxies...');
     }
-    
+
     // Use CORS proxies for Reddit images
     const corsProxies = [
         `https://corsproxy.io/?${encodeURIComponent(imgUrl)}`,
         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(imgUrl)}`,
         `https://proxy.cors.sh/${imgUrl}`,
     ];
-    
+
     // Try CORS proxies
     for (const proxyUrl of corsProxies) {
         try {
@@ -153,7 +153,7 @@ async function downloadMeme() {
             console.log('Proxy failed:', proxyUrl);
         }
     }
-    
+
     // Last resort: Create a temporary anchor with the image URL
     // This works in some browsers for same-origin or CORS-enabled images
     try {
@@ -165,18 +165,18 @@ async function downloadMeme() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Assume success since we can't know for sure
         onDownloadSuccess();
         return;
     } catch (e) {
         console.log('Direct link download failed');
     }
-    
+
     // Final fallback: open image in new tab for manual save
     showToast('Opening image - right-click and "Save image as..."', 'warning');
     window.open(imgUrl, '_blank');
-    
+
     function downloadBlob(blob, filename) {
         const objectUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -187,7 +187,7 @@ async function downloadMeme() {
         document.body.removeChild(link);
         URL.revokeObjectURL(objectUrl);
     }
-    
+
     function onDownloadSuccess() {
         state.stats.downloaded++;
         saveStats();
@@ -204,7 +204,7 @@ async function shareMeme() {
     const { state, saveStats } = window.MemeState;
     const { showToast } = window.MemeUI;
     const { updateStats } = window.MemeSettings;
-    
+
     if (!state.currentMeme) return;
 
     if (navigator.share) {
@@ -214,7 +214,7 @@ async function shareMeme() {
                 text: 'Check out this meme!',
                 url: state.currentMeme.postLink
             });
-            
+
             state.stats.shared++;
             saveStats();
             updateStats();
@@ -235,13 +235,13 @@ async function copyMemeLink() {
     const { showToast } = window.MemeUI;
     const { sounds } = window.MemeSounds;
     const { copyToClipboard } = window.MemeUtils;
-    
+
     if (!state.currentMeme) return;
-    
+
     const success = await copyToClipboard(
         state.currentMeme.postLink || state.currentMeme.url
     );
-    
+
     if (success) {
         showToast('Link copied to clipboard! 📋', 'success');
         sounds.success();
@@ -255,7 +255,7 @@ async function copyMemeLink() {
  */
 function openInReddit() {
     const { state } = window.MemeState;
-    
+
     if (!state.currentMeme || !state.currentMeme.postLink) return;
     window.open(state.currentMeme.postLink, '_blank');
 }
@@ -266,15 +266,15 @@ function openInReddit() {
 function surpriseMe() {
     const { state } = window.MemeState;
     const { showToast, createConfetti } = window.MemeUI;
-    
+
     const surprises = ['wholesomememes', 'dankmemes', 'MemeEconomy', 'me_irl', 'AdviceAnimals'];
     const randomCategory = surprises[Math.floor(Math.random() * surprises.length)];
-    
+
     // Update category button
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.category === randomCategory);
     });
-    
+
     state.currentCategory = randomCategory;
     getMeme(randomCategory);
     createConfetti();

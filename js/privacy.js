@@ -6,7 +6,7 @@
 const CONSENT_KEY = 'meme-privacy-consent';
 const STORAGE_KEYS = [
     'meme-favorites',
-    'meme-history', 
+    'meme-history',
     'meme-seen',
     'meme-stats',
     'meme-streak',
@@ -42,7 +42,7 @@ function setConsent(consent) {
  */
 function showConsentBanner() {
     if (hasConsent()) return;
-    
+
     const banner = document.createElement('div');
     banner.id = 'privacy-banner';
     banner.innerHTML = `
@@ -64,7 +64,7 @@ function showConsentBanner() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(banner);
 }
 
@@ -87,7 +87,7 @@ function declineConsent() {
     clearAllData();
     const banner = document.getElementById('privacy-banner');
     if (banner) banner.remove();
-    
+
     // Show notice that some features won't work
     if (window.MemeUI) {
         window.MemeUI.showToast('Data storage disabled. Some features may not persist.', 'warning');
@@ -101,7 +101,7 @@ function clearAllData() {
     STORAGE_KEYS.forEach(key => {
         localStorage.removeItem(key);
     });
-    
+
     // Reset state if available
     if (window.MemeState) {
         const { state } = window.MemeState;
@@ -120,7 +120,7 @@ function clearAllData() {
 function getStorageInfo() {
     let totalSize = 0;
     const details = {};
-    
+
     STORAGE_KEYS.forEach(key => {
         const data = localStorage.getItem(key);
         if (data) {
@@ -129,7 +129,7 @@ function getStorageInfo() {
             details[key] = formatBytes(size);
         }
     });
-    
+
     return {
         total: formatBytes(totalSize),
         totalBytes: totalSize,
@@ -155,56 +155,71 @@ function formatBytes(bytes) {
 /**
  * Show data management modal
  */
+/**
+ * Show data management modal
+ */
 function showDataManagement() {
     const info = getStorageInfo();
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.id = 'data-modal';
-    modal.style.cssText = 'overflow-y: auto; padding: 2rem 1rem;';
+    modal.style.cssText = 'padding: 0; display: flex; align-items: center; justify-content: center;';
     modal.innerHTML = `
-        <div class="quiz-content" style="max-width: 450px; max-height: 85vh; overflow-y: auto; margin: auto;">
+        <div class="quiz-content" style="max-width: 650px; width: 95%; margin: auto; padding: 2rem;">
             <span class="modal-close" onclick="this.closest('.modal').remove()">&times;</span>
-            <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-database"></i> Your Data</h2>
+            <h2 style="margin-bottom: 1rem; font-size: 1.5rem; text-align: center;"><i class="fas fa-database"></i> Your Data</h2>
             
-            <div style="text-align: left; margin-bottom: 1.5rem;">
-                <p style="margin-bottom: 1rem; color: var(--text-muted);">
-                    All data is stored locally on your device. Nothing is sent to any server.
-                </p>
-                
-                <div style="background: var(--bg-darker); padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <span>Total Storage Used:</span>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted); text-align: center; font-size: 0.9rem;">
+                All data is stored locally on your device. Nothing is sent to any server.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <!-- Stats Box -->
+                <div style="background: var(--bg-darker); padding: 1.25rem; border-radius: 12px; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span>Total Used:</span>
                         <strong style="color: var(--primary);">${info.total}</strong>
                     </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>Browser Limit:</span>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem;">
+                        <span>Limit:</span>
                         <span>${info.limit}</span>
+                    </div>
+                     <div style="display: flex; justify-content: space-between;">
+                        <span>Usage:</span>
+                        <span style="color: ${parseFloat(info.percentUsed) > 80 ? 'var(--danger)' : 'var(--success)'}">${info.percentUsed}</span>
                     </div>
                 </div>
                 
-                <h4 style="margin-bottom: 0.5rem;">Storage Breakdown:</h4>
-                <ul style="font-size: 0.85rem; color: var(--text-muted);">
-                    ${Object.entries(info.details).map(([key, size]) => 
-                        `<li style="margin-bottom: 0.25rem;">${key.replace('meme-', '')}: ${size}</li>`
-                    ).join('')}
-                </ul>
+                <!-- Breakdown List -->
+                <div>
+                    <h4 style="margin-bottom: 0.75rem; font-size: 1rem;">Storage Breakdown:</h4>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr; gap: 0.5rem; max-height: 150px; overflow-y: auto; padding: 1rem;">
+                        ${Object.entries(info.details).map(([key, size]) =>
+        `<li style="display: flex; justify-content: space-between;">
+                                <span>${key.replace('meme-', '').replace(/-/g, ' ')}</span>
+                                <b>${size}</b>
+                            </li>`
+    ).join('')}
+                    </ul>
+                </div>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <!-- Actions -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                 <button class="btn btn-secondary" onclick="window.MemePrivacy.exportData()">
-                    <i class="fas fa-download"></i> Export My Data
+                    <i class="fas fa-download"></i> Export Data
                 </button>
                 <button class="btn btn-danger" onclick="window.MemePrivacy.confirmClearData()">
-                    <i class="fas fa-trash"></i> Clear All Data
+                    <i class="fas fa-trash"></i> Clear Data
                 </button>
                 <button class="btn" onclick="this.closest('.modal').remove()">
-                    <i class="fas fa-check"></i> Back To Meme
+                    <i class="fas fa-times"></i> Close
                 </button>
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
 }
 
@@ -215,7 +230,7 @@ function confirmClearData() {
     if (confirm('Are you sure you want to delete all your data? This includes favorites, history, achievements, and preferences. This cannot be undone!')) {
         clearAllData();
         document.getElementById('data-modal')?.remove();
-        
+
         // Refresh UI
         if (window.MemeFavorites) window.MemeFavorites.renderFavorites();
         if (window.MemeHistory) window.MemeHistory.renderHistory();
@@ -234,7 +249,7 @@ function confirmClearData() {
  */
 function exportData() {
     const data = {};
-    
+
     STORAGE_KEYS.forEach(key => {
         const value = localStorage.getItem(key);
         if (value) {
@@ -245,17 +260,17 @@ function exportData() {
             }
         }
     });
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `meme-lab-data-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
-    
+
     URL.revokeObjectURL(url);
-    
+
     if (window.MemeUI) {
         window.MemeUI.showToast('Data exported successfully!', 'success');
     }

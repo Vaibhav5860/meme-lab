@@ -19,17 +19,45 @@ const memeTemplates = [
     'https://i.imgflip.com/2/7syro.jpg'  // Batman Slapping Robin
 ];
 
+// State for text styles
+const textStyles = {
+    color: '#ffffff',
+    top: { size: 40 },
+    bottom: { size: 40 }
+};
+
 /**
  * Open meme creator modal
  */
 function openCreator() {
     document.getElementById('creator-modal').classList.add('active');
     randomTemplate();
-    
-    // Clear inputs
+    resetCreator();
+}
+
+/**
+ * Reset creator inputs and styles
+ */
+function resetCreator() {
+    // Clear text inputs
     document.getElementById('top-text-input').value = '';
     document.getElementById('bottom-text-input').value = '';
+
+    // Reset styles state
+    textStyles.color = '#ffffff';
+    textStyles.top.size = 40;
+    textStyles.bottom.size = 40;
+
+    // Reset inputs
+    document.getElementById('text-color-input').value = '#ffffff';
+    const sliders = document.querySelectorAll('input[type="range"]');
+    sliders.forEach(s => s.value = 40);
+
+    // Update UI
     updateCreatorText();
+    updateTextStyle('color', '#ffffff');
+    updateTextStyle('top', 'size', 40);
+    updateTextStyle('bottom', 'size', 40);
 }
 
 /**
@@ -54,9 +82,31 @@ function randomTemplate() {
 function updateCreatorText() {
     const topText = document.getElementById('top-text-input').value || 'TOP TEXT';
     const bottomText = document.getElementById('bottom-text-input').value || 'BOTTOM TEXT';
-    
+
     document.getElementById('top-text').textContent = topText;
     document.getElementById('bottom-text').textContent = bottomText;
+}
+
+/**
+ * Update text styles (color, size)
+ * @param {string} target - 'top' | 'bottom' | 'color'
+ * @param {string|number} property - 'size' or value if target is color
+ * @param {number} value - Value if target is not color
+ */
+function updateTextStyle(target, property, value) {
+    if (target === 'color') {
+        textStyles.color = property; // property is value here
+        const color = property;
+        document.getElementById('top-text').style.color = color;
+        document.getElementById('bottom-text').style.color = color;
+    } else {
+        textStyles[target][property] = value;
+        const element = document.getElementById(`${target}-text`);
+        // Map range 20-80 to reasonable rem/px values for preview
+        // Using px for easier calculation: range value = px
+        // Scale relative to container width? Just direct px is fine for preview
+        element.style.fontSize = `${value / 16}rem`;
+    }
 }
 
 /**
@@ -65,26 +115,26 @@ function updateCreatorText() {
  */
 async function downloadCreatedMeme() {
     const { showToast } = window.MemeUI;
-    
+
     showToast('Creating your meme... 🎨', 'success');
-    
+
     const imgElement = document.getElementById('creator-image');
     const topText = document.getElementById('top-text-input').value || 'TOP TEXT';
     const bottomText = document.getElementById('bottom-text-input').value || 'BOTTOM TEXT';
     const imgSrc = imgElement.src;
-    
+
     // Check if it's a data URL (uploaded image) - can use directly
     if (imgSrc.startsWith('data:')) {
         renderAndDownload(imgElement, topText, bottomText);
         return;
     }
-    
+
     // For external URLs, fetch and convert to blob first to avoid CORS
     try {
         const response = await fetch(imgSrc);
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
-        
+
         const img = new Image();
         img.onload = () => {
             renderAndDownload(img, topText, bottomText);
@@ -92,11 +142,10 @@ async function downloadCreatedMeme() {
         };
         img.onerror = () => {
             URL.revokeObjectURL(objectUrl);
-            // Fallback: try with crossOrigin
             tryWithCrossOrigin(imgSrc, topText, bottomText);
         };
         img.src = objectUrl;
-        
+
     } catch (error) {
         console.warn('Fetch failed, trying crossOrigin approach:', error);
         tryWithCrossOrigin(imgSrc, topText, bottomText);
@@ -108,7 +157,7 @@ async function downloadCreatedMeme() {
  */
 function tryWithCrossOrigin(imgSrc, topText, bottomText) {
     const { showToast } = window.MemeUI;
-    
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
@@ -125,36 +174,64 @@ function tryWithCrossOrigin(imgSrc, topText, bottomText) {
  */
 function renderAndDownload(img, topText, bottomText) {
     const { showToast } = window.MemeUI;
-    
+
     try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
-        // Set canvas size to image size
+
+        // Use natural size for high quality
         canvas.width = img.naturalWidth || img.width || 500;
         canvas.height = img.naturalHeight || img.height || 500;
-        
+
         // Draw image
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // Configure text style
-        const fontSize = Math.floor(canvas.width / 12);
-        ctx.font = `bold ${fontSize}px Impact, sans-serif`;
+
+        // Calculate style ratios based on Preview
+        // We need to know how big the text is relative to the *displayed* image
+        const previewImg = document.getElementById('creator-image');
+        const displayedWidth = previewImg.clientWidth || 1; // avoid divide by zero
+        // Ratio = NewCanvasWidth / DisplayedWidth
+        const scaleRatio = canvas.width / displayedWidth;
+
+        // Configure common text style
         ctx.textAlign = 'center';
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = textStyles.color;
         ctx.strokeStyle = 'black';
-        ctx.lineWidth = fontSize / 15;
-        
-        // Draw top text
-        const topY = fontSize + 10;
-        ctx.strokeText(topText.toUpperCase(), canvas.width / 2, topY);
-        ctx.fillText(topText.toUpperCase(), canvas.width / 2, topY);
-        
-        // Draw bottom text
-        const bottomY = canvas.height - 15;
-        ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, bottomY);
-        ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, bottomY);
-        
+        ctx.lineJoin = 'round';
+
+        // Helper to draw text
+        const drawText = (text, position) => {
+            // Calculate font size
+            // Default size in CSS is rem, state has raw value (roughly equivalent to px in standard view)
+            // But we modified the DOM element style directly in updateTextStyle
+            const textEl = document.getElementById(`${position}-text`);
+            const computedStyle = window.getComputedStyle(textEl);
+            const displayedFontSize = parseFloat(computedStyle.fontSize);
+
+            const fontSize = displayedFontSize * scaleRatio;
+
+            ctx.font = `bold ${fontSize}px Impact, sans-serif`;
+            ctx.lineWidth = fontSize / 15;
+
+            const x = canvas.width / 2;
+            // Calculate Y position
+            // Top is simple (padding from top)
+            // Bottom is padding from bottom
+            // We use a relative padding like 5% of height
+            let y;
+            if (position === 'top') {
+                y = fontSize * 1.2; // Approximate top padding + line height
+            } else {
+                y = canvas.height - (fontSize * 0.5); // Bottom padding
+            }
+
+            ctx.strokeText(text.toUpperCase(), x, y);
+            ctx.fillText(text.toUpperCase(), x, y);
+        };
+
+        drawText(topText, 'top');
+        drawText(bottomText, 'bottom');
+
         // Convert to blob and download
         canvas.toBlob((blob) => {
             if (blob) {
@@ -171,7 +248,7 @@ function renderAndDownload(img, topText, bottomText) {
                 showToast('Failed to create image. Try uploading your own!', 'warning');
             }
         }, 'image/png');
-        
+
     } catch (error) {
         console.error('Render failed:', error);
         showToast('Failed to create meme. Try uploading your own image!', 'warning');
@@ -185,7 +262,7 @@ function uploadCustomImage() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    
+
     input.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -196,20 +273,8 @@ function uploadCustomImage() {
             reader.readAsDataURL(file);
         }
     };
-    
-    input.click();
-}
 
-/**
- * Adjust text size
- * @param {string} position - 'top' or 'bottom'
- * @param {number} change - Size change in rem
- */
-function adjustTextSize(position, change) {
-    const element = document.getElementById(`${position}-text`);
-    const currentSize = parseFloat(getComputedStyle(element).fontSize);
-    const newSize = Math.max(12, Math.min(48, currentSize + change));
-    element.style.fontSize = newSize + 'px';
+    input.click();
 }
 
 // Export for use in other modules
@@ -218,8 +283,8 @@ window.MemeCreator = {
     closeCreator,
     randomTemplate,
     updateCreatorText,
+    updateTextStyle,
     downloadCreatedMeme,
     uploadCustomImage,
-    adjustTextSize,
     memeTemplates
 };

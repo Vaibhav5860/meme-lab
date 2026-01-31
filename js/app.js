@@ -8,53 +8,53 @@
  */
 function initApp() {
     console.log('🎭 Meme Lab initializing...');
-    
+
     // Show privacy consent banner if needed
     window.MemePrivacy.showConsentBanner();
-    
+
     // Load state from localStorage
     window.MemeState.loadState();
-    
+
     // Initialize UI elements
     window.MemeUI.initElements();
-    
+
     // Apply saved theme
     window.MemeUI.applyTheme();
-    
+
     // Update sound icon
     window.MemeUI.updateSoundIcon();
-    
+
     // Update stats display
     window.MemeSettings.updateStats();
-    
+
     // Update streak
     window.MemeSettings.updateStreak();
-    
+
     // Render favorites and history
     window.MemeFavorites.renderFavorites();
     window.MemeHistory.renderHistory();
-    
+
     // Setup category listeners
     window.MemeCategories.setupCategoryListeners();
-    
+
     // Setup keyboard shortcuts
     window.MemeKeyboard.setupKeyboardShortcuts();
-    
+
     // Setup settings listeners
     window.MemeSettings.setupSettingsListeners();
-    
+
     // Setup mobile listeners
     window.MemeMobile.setupMobileListeners();
-    
+
     // Check achievements
     window.MemeSettings.checkAchievements();
-    
+
     // Show random fact
     window.MemeSettings.showRandomFact();
-    
+
     // Load initial meme
     window.MemeMeme.getMeme();
-    
+
     console.log('🎭 Meme Lab ready!');
 }
 
@@ -82,8 +82,7 @@ window.downloadCreatedMeme = () => window.MemeCreator.downloadCreatedMeme();
 window.playQuiz = () => window.MemeQuiz.playQuiz();
 window.closeQuiz = () => window.MemeQuiz.closeQuiz();
 
-window.playJokes = () => window.MemeJokes.openJokes();
-window.closeJokes = () => window.MemeJokes.closeJokes();
+
 
 window.playJokesApi = () => window.MemeJokesApi.openJokes();
 window.closeJokesApi = () => window.MemeJokesApi.closeJokes();

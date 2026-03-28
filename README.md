@@ -84,4 +84,5 @@ meme lab/
 
 ## License
 
-Add your preferred license (MIT, Apache-2.0, etc.).
+MIT. See [LICENSE](LICENSE) for full text.
+

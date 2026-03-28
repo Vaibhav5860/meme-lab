@@ -26,16 +26,6 @@ Meme Lab is a playful, modular meme playground built with vanilla web tech. It b
 - Enjoy quiz, jokes API, slideshow, and sound modules
 - Tune behavior with settings and privacy controls
 
-## Animated GIF Preview
-
-Drop your exported GIF at:
-
-`assets/screenshot/meme-lab-preview.gif`
-
-Then this preview will render automatically in the README:
-
-![Meme Lab Animated Preview](assets/screenshot/meme-lab-preview.gif)
-
 ## Screenshot Gallery
 
 <table>
